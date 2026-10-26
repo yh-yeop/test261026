@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>어떤 분석 방법을 쓸까</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1b2430; --sub:#64748b;
+    --line:#dde3ea; --accent:#2f5597; --accent-soft:#e8eef8;
+    --ok:#1b8a5a; --ok-soft:#e3f5ec; --no:#c0392b; --no-soft:#fdecec;
+    --shadow:0 2px 14px rgba(27,36,48,.08);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing:border-box;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#141a21; --card:#1e262f; --ink:#e8edf3; --sub:#9aa7b5;
+      --line:#2e3845; --accent:#7aa5e8; --accent-soft:#263447;
+      --ok:#4ec98f; --ok-soft:#1d3a2e; --no:#f0897f; --no-soft:#3a2322;
+      --shadow:0 2px 14px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#141a21; --card:#1e262f; --ink:#e8edf3; --sub:#9aa7b5;
+    --line:#2e3845; --accent:#7aa5e8; --accent-soft:#263447;
+    --ok:#4ec98f; --ok-soft:#1d3a2e; --no:#f0897f; --no-soft:#3a2322;
+    --shadow:0 2px 14px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top: env(safe-area-inset-top, 0px)}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:24px 18px 60px}
+
+  header{text-align:center; margin-bottom:22px}
+  h1{font-size:clamp(22px,5vw,30px); font-weight:900; margin:0 0 6px; letter-spacing:-.02em}
+  .sub{color:var(--sub); font-size:14px; margin:0}
+
+  .bar{height:6px; background:var(--line); border-radius:99px; overflow:hidden; margin:18px 0 10px}
+  .bar i{display:block; height:100%; width:0; background:var(--accent); border-radius:99px; transition:width .35s ease}
+  .meta{display:flex; justify-content:space-between; font-size:13px; color:var(--sub); margin-bottom:16px}
+  .meta b{color:var(--accent); font-weight:700}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:26px 22px; box-shadow:var(--shadow);
+  }
+  .tag{
+    display:inline-block; font-size:12px; font-weight:700; letter-spacing:.04em;
+    color:var(--accent); background:var(--accent-soft); padding:5px 11px; border-radius:99px; margin-bottom:14px;
+  }
+  .situation{font-size:clamp(17px,3.6vw,20px); font-weight:500; margin:0 0 4px; word-break:keep-all}
+
+  .opts{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:22px}
+  @media (max-width:430px){ .opts{grid-template-columns:1fr} }
+  .opt{
+    appearance:none; font:inherit; cursor:pointer; text-align:left;
+    background:var(--card); color:var(--ink); border:1.5px solid var(--line);
+    border-radius:12px; padding:14px 16px; transition:.15s;
+  }
+  .opt .nm{font-weight:700; font-size:16px; display:block}
+  .opt .hint{font-size:12.5px; color:var(--sub); display:block; margin-top:2px}
+  .opt:hover:not(:disabled){border-color:var(--accent); transform:translateY(-1px)}
+  .opt:disabled{cursor:default; opacity:.55}
+  .opt.ok{background:var(--ok-soft); border-color:var(--ok); opacity:1}
+  .opt.ok .nm{color:var(--ok)}
+  .opt.no{background:var(--no-soft); border-color:var(--no); opacity:1}
+  .opt.no .nm{color:var(--no)}
+
+  .fb{margin-top:18px; padding:16px 18px; border-radius:12px; display:none; animation:up .25s ease}
+  .fb.show{display:block}
+  .fb.y{background:var(--ok-soft); border-left:4px solid var(--ok)}
+  .fb.n{background:var(--no-soft); border-left:4px solid var(--no)}
+  .fb .v{font-weight:800; font-size:15px; margin:0 0 5px}
+  .fb.y .v{color:var(--ok)} .fb.n .v{color:var(--no)}
+  .fb p{margin:0; font-size:14.5px; color:var(--ink); word-break:keep-all}
+  @keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .nav{display:flex; gap:10px; margin-top:18px}
+  .btn{
+    appearance:none; font:inherit; font-weight:700; cursor:pointer; flex:1;
+    background:var(--accent); color:#fff; border:none; border-radius:12px; padding:14px;
+    font-size:15px; transition:.15s;
+  }
+  .btn:hover{filter:brightness(1.07)}
+  .btn.ghost{background:transparent; color:var(--sub); border:1.5px solid var(--line)}
+  .btn:disabled{opacity:.4; cursor:default}
+
+  .done{text-align:center; padding:40px 22px}
+  .score{font-size:50px; font-weight:900; color:var(--accent); line-height:1.1}
+  .score small{font-size:20px; color:var(--sub); font-weight:500}
+  .msg{font-size:17px; font-weight:700; margin:12px 0 22px}
+  .tbl{width:100%; border-collapse:collapse; margin:20px 0; font-size:14px}
+  .tbl th,.tbl td{border:1px solid var(--line); padding:9px 11px; text-align:left}
+  .tbl th{background:var(--accent-soft); font-weight:700; color:var(--accent)}
+  .tbl td.c{text-align:center}
+  .wrong{color:var(--no); font-weight:700}
+
+  .guide{margin-top:26px; padding:18px 20px; background:var(--card); border:1px solid var(--line); border-radius:14px}
+  .guide h3{margin:0 0 10px; font-size:15px; color:var(--accent)}
+  .guide table{width:100%; border-collapse:collapse; font-size:14px}
+  .guide td{padding:7px 2px; border-bottom:1px solid var(--line); word-break:keep-all}
+  .guide tr:last-child td{border-bottom:none}
+  .guide td:first-child{font-weight:700; width:55%}
+  .guide td:last-child{color:var(--accent); font-weight:700; text-align:right; white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>어떤 분석 방법을 쓸까</h1>
+    <p class="sub">상황을 읽고 알맞은 데이터 분석 방법을 고르세요</p>
+  </header>
+
+  <div id="quiz">
+    <div class="bar"><i id="prog"></i></div>
+    <div class="meta">
+      <span><b id="qn">1</b> / <span id="qt">20</span></span>
+      <span>맞힌 개수 <b id="sc">0</b></span>
+    </div>
+
+    <div class="card">
+      <span class="tag" id="field">상황</span>
+      <p class="situation" id="sit"></p>
+
+      <div class="opts" id="opts">
+        <button class="opt" data-k="회귀">
+          <span class="nm">회귀분석</span><span class="hint">숫자를 예측</span></button>
+        <button class="opt" data-k="분류">
+          <span class="nm">분류 분석</span><span class="hint">어느 그룹인지 예측</span></button>
+        <button class="opt" data-k="군집">
+          <span class="nm">군집 분석</span><span class="hint">비슷한 것끼리 묶기</span></button>
+        <button class="opt" data-k="연관">
+          <span class="nm">연관 분석</span><span class="hint">함께 나타나는 규칙</span></button>
+      </div>
+
+      <div class="fb" id="fb">
+        <p class="v" id="verdict"></p>
+        <p id="why"></p>
+      </div>
+
+      <div class="nav">
+        <button class="btn" id="next" disabled>다음 문제</button>
+      </div>
+    </div>
+
+    <div class="guide">
+      <h3>판단 기준</h3>
+      <table>
+        <tr><td>숫자를 맞혀야 하나?</td><td>회귀</td></tr>
+        <tr><td>어느 쪽인지 맞혀야 하나?</td><td>분류</td></tr>
+        <tr><td>정답이 없는데 묶어야 하나?</td><td>군집</td></tr>
+        <tr><td>뭐랑 뭐가 같이 나타나나?</td><td>연관</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div id="result" style="display:none">
+    <div class="card done">
+      <div class="score" id="final">0<small> / 20</small></div>
+      <p class="msg" id="rmsg"></p>
+      <div id="review"></div>
+      <div class="nav">
+        <button class="btn ghost" id="again">다시 풀기</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const QS = [
+  {f:"교육", s:"공부 시간과 수면 시간으로 시험 점수가 몇 점이 될지 예측하려 한다.", a:"회귀",
+   e:"점수라는 연속적인 숫자를 예측하므로 회귀분석이다."},
+  {f:"유통", s:"편의점에서 어떤 상품들이 함께 팔리는지 파악해 진열 위치를 정하려 한다.", a:"연관",
+   e:"장바구니 분석의 대표 사례다. 지지도·신뢰도·향상도로 규칙을 찾는다."},
+  {f:"교육", s:"학생들을 생활 습관이 비슷한 몇 개의 유형으로 나누어 유형별 상담을 하려 한다.", a:"군집",
+   e:"미리 정해진 유형이 없는 상태에서 비슷한 학생끼리 묶으므로 군집 분석이다."},
+  {f:"보안", s:"메일의 제목과 본문을 보고 스팸인지 아닌지 가려내려 한다.", a:"분류",
+   e:"스팸/정상이라는 정해진 두 그룹 중 하나로 가르므로 분류 분석이다."},
+  {f:"부동산", s:"평수, 역세권 여부, 층수로 아파트 가격을 예측하려 한다.", a:"회귀",
+   e:"가격이라는 연속적인 숫자를 예측한다."},
+  {f:"게임", s:"롤 챔피언들을 공격력·방어력·마법력으로 비슷한 유형끼리 묶어 보려 한다.", a:"군집",
+   e:"공식 역할군을 쓰지 않고 능력치만으로 묶으므로 군집 분석이다."},
+  {f:"의료", s:"건강검진 결과로 그 사람이 흡연자인지 아닌지 알아내려 한다.", a:"분류",
+   e:"흡연/비흡연이라는 정해진 레이블로 가른다."},
+  {f:"영상", s:"넷플릭스에서 어떤 영화들이 함께 시청되는지 찾아 추천 목록을 만들려 한다.", a:"연관",
+   e:"함께 나타나는 항목의 규칙을 찾으므로 연관 분석이다."},
+  {f:"유통", s:"기온, 요일, 행사 유무로 내일 매장 매출이 얼마일지 예측하려 한다.", a:"회귀",
+   e:"매출액이라는 숫자를 예측한다."},
+  {f:"금융", s:"신용 기록을 보고 대출을 승인할지 거절할지 판단하려 한다.", a:"분류",
+   e:"승인/거절 두 그룹 중 하나로 가른다."},
+  {f:"여행", s:"유럽 도시들을 생활비·물가 특성에 따라 비슷한 유형으로 나누려 한다.", a:"군집",
+   e:"도시를 묶는 정답이 없으므로 군집 분석이다."},
+  {f:"도서관", s:"어떤 책들이 함께 대출되는지 찾아 서가 배치에 반영하려 한다.", a:"연관",
+   e:"함께 빌리는 규칙을 찾으므로 연관 분석이다."},
+  {f:"스포츠", s:"타율, 홈런, 출루율로 야구 선수들을 비슷한 유형끼리 묶어 보려 한다.", a:"군집",
+   e:"거포형·교타형 같은 유형을 데이터에서 발견한다."},
+  {f:"건강", s:"키, 몸무게, 복부 둘레로 체지방률을 예측하려 한다.", a:"회귀",
+   e:"체지방률이라는 연속적인 숫자를 예측한다."},
+  {f:"상거래", s:"온라인 쇼핑몰 장바구니에 어떤 상품이 같이 담기는지 분석하려 한다.", a:"연관",
+   e:"가장 전형적인 연관 분석 사례다."},
+  {f:"리뷰", s:"상품 리뷰 글을 읽고 긍정인지 부정인지 판단하려 한다.", a:"분류",
+   e:"긍정/부정이라는 정해진 범주로 가르므로 분류 분석이다."},
+  {f:"학교", s:"고교학점제에서 학생들이 어떤 선택과목들을 함께 고르는지 알아보려 한다.", a:"연관",
+   e:"함께 선택되는 과목 조합을 찾으므로 연관 분석이다."},
+  {f:"고객", s:"쇼핑몰 고객을 구매 성향에 따라 몇 개의 집단으로 나누려 한다. 집단의 수나 이름은 정해져 있지 않다.", a:"군집",
+   e:"정답이 없는 상태에서 비슷한 고객끼리 묶으므로 군집 분석이다."},
+  {f:"고객", s:"쇼핑몰 고객 등급이 VIP·일반·휴면으로 이미 정해져 있다. 새 고객이 어느 등급에 속할지 예측하려 한다.", a:"분류",
+   e:"등급이 미리 정해져 있으므로 분류 분석이다. 18번과 비교해 보자."},
+  {f:"경영", s:"다음 분기 매출이 오를지 내릴지 두 가지 중 하나로 예측하려 한다.", a:"분류",
+   e:"오름/내림 두 범주로 가르므로 분류다. 얼마나 오를지를 묻는다면 회귀가 된다."}
+];
+
+const $ = id => document.getElementById(id);
+let i = 0, score = 0, log = [];
+
+function render(){
+  const q = QS[i];
+  $("field").textContent = q.f;
+  $("sit").textContent = q.s;
+  $("qn").textContent = i + 1;
+  $("qt").textContent = QS.length;
+  $("sc").textContent = score;
+  $("prog").style.width = (i / QS.length * 100) + "%";
+  $("fb").className = "fb";
+  $("next").disabled = true;
+  $("next").textContent = (i === QS.length - 1) ? "결과 보기" : "다음 문제";
+  document.querySelectorAll(".opt").forEach(b => {
+    b.disabled = false; b.className = "opt";
+  });
+}
+
+document.querySelectorAll(".opt").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const q = QS[i], pick = btn.dataset.k, right = (pick === q.a);
+    if (right) score++;
+    log.push({n: i + 1, s: q.s, pick, a: q.a, ok: right});
+    document.querySelectorAll(".opt").forEach(b => {
+      b.disabled = true;
+      if (b.dataset.k === q.a) b.classList.add("ok");
+      else if (b === btn) b.classList.add("no");
+    });
+    $("verdict").textContent = right ? "정답입니다" : "아쉽네요. 정답은 " + q.a + " 분석";
+    $("why").textContent = q.e;
+    $("fb").className = "fb show " + (right ? "y" : "n");
+    $("sc").textContent = score;
+    $("next").disabled = false;
+  });
+});
+
+$("next").addEventListener("click", () => {
+  i++;
+  if (i < QS.length) { render(); window.scrollTo({top:0, behavior:"smooth"}); }
+  else finish();
+});
+
+function finish(){
+  $("quiz").style.display = "none";
+  $("result").style.display = "block";
+  $("final").innerHTML = score + '<small> / ' + QS.length + '</small>';
+  const r = score / QS.length;
+  $("rmsg").textContent =
+    r === 1 ? "완벽합니다. 네 가지 방법을 정확히 구분하고 있어요." :
+    r >= .8 ? "잘했습니다. 거의 다 맞혔네요." :
+    r >= .6 ? "괜찮습니다. 틀린 문제를 다시 살펴보세요." :
+              "판단 기준표를 다시 보고 도전해 보세요.";
+  const bad = log.filter(x => !x.ok);
+  if (bad.length){
+    let h = '<table class="tbl"><tr><th>번호</th><th>내가 고른 것</th><th>정답</th></tr>';
+    bad.forEach(x => {
+      h += '<tr><td class="c">' + x.n + '</td><td class="wrong">' + x.pick +
+           '</td><td class="c">' + x.a + '</td></tr>';
+    });
+    h += '</table>';
+    $("review").innerHTML = '<p style="font-size:14px;color:var(--sub);margin-top:24px">틀린 문제</p>' + h;
+  } else {
+    $("review").innerHTML = "";
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+$("again").addEventListener("click", () => {
+  i = 0; score = 0; log = [];
+  $("result").style.display = "none";
+  $("quiz").style.display = "block";
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
